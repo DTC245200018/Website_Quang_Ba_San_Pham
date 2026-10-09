@@ -17,6 +17,8 @@ services:
       mysql-db:
         condition: service_healthy
     user: "33:33"
+    security_opt:
+      - no-new-privileges:true
 
   mysql-db:
     image: mysql:8.0
@@ -64,6 +66,13 @@ services:
       - ./nginx/ssl:/etc/nginx/ssl:ro
     networks: [web_net]
     depends_on: [wordpress, phpmyadmin]
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    tmpfs:
+      - /var/cache/nginx
+      - /var/run
+      - /tmp
 
   prometheus:
     image: prom/prometheus:latest
