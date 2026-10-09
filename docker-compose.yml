@@ -153,6 +153,21 @@ services:
     networks: [monitor_net]
     depends_on: [loki]
 
+
+  mysqld-exporter:
+    image: prom/mysqld-exporter:latest
+    container_name: mysqld-exporter
+    restart: unless-stopped
+    volumes:
+      - ./monitoring/my.cnf:/etc/.my.cnf:ro
+    command:
+      - '--config.my-cnf=/etc/.my.cnf'
+    networks: [db_net, monitor_net]
+    depends_on:
+      mysql-db:
+        condition: service_healthy
+
+
 networks:
   db_net:
     name: db_net_${MSSV}
