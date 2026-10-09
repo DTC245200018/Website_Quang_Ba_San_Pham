@@ -2,11 +2,12 @@
 
 **Họ tên:** Đinh Bảo Khanh  
 **MSSV:** DTC245200018  
-**Đề tài:** Website Quảng bá Sản phẩm (WordPress)
+**Đề tài:** Website Quảng bá Sản phẩm (WordPress)  
+**Repository:** https://github.com/DTC245200018/Website_Quang_Ba_San_Pham
 
 ## 1. Mô tả hệ thống
 
-Hệ thống triển khai website WordPress quảng bá sản phẩm Chè Thái Nguyên với đầy đủ các thành phần:
+Hệ thống triển khai website WordPress quảng bá sản phẩm Chè Thái Nguyên, bao gồm:
 
 - Ứng dụng: WordPress + MySQL + phpMyAdmin
 - Reverse Proxy: Nginx (HTTP → HTTPS, Security Headers, HSTS)
@@ -14,77 +15,85 @@ Hệ thống triển khai website WordPress quảng bá sản phẩm Chè Thái 
 - Log tập trung: Loki + Promtail (LogQL)
 - Hardening: non-root, network isolation, no-new-privileges, read-only, mật khẩu mạnh, hạn chế quyền DB
 
-## 2. Yêu cầu hệ thống
+## 2. Yêu cầu
 
 - Ubuntu (đã cài Docker + Docker Compose)
 - Tối thiểu 2GB RAM
-- Cổng 80, 443, 3000, 9090, 3100 chưa bị chiếm
 
 ## 3. Cách chạy
 
-1. Clone repository:
-   git clone https://github.com/dinhbaokhanh01/Website_Quang_Ba_San_Pham.git
-   cd Website_Quang_Ba_San_Pham
+```bash
+git clone https://github.com/DTC245200018/Website_Quang_Ba_San_Pham.git
+cd Website_Quang_Ba_San_Pham
 
-2. Tạo file .env (tham khảo mẫu bên dưới)
+# Tạo file môi trường từ mẫu (tự đặt mật khẩu mạnh)
+cp .env.example .env
+nano .env
 
-3. Khởi động:
-   docker compose up -d
-   docker compose ps
+docker compose up -d
+docker compose ps
+```
 
-### File .env mẫu
+## 4. Truy cập dịch vụ
 
-MSSV=DTC245200018
-WP_DB=wp_DTC245200018
-WP_USER=wp_DTC245200018
-WP_PASSWORD=WpMatKhau_DTC245200018_2026!
-MYSQL_ROOT_PASSWORD=RootMySQL_DTC245200018_2026!
-GRAFANA_USER=admin
-GRAFANA_PASSWORD=Grafana_DTC245200018_2026!
-BIND_ADDR=127.0.0.1
-
-## 4. Truy cập các dịch vụ
-
-- Website: https://localhost (chứng chỉ tự ký, Accept Risk)
-- phpMyAdmin: https://localhost/phpmyadmin (root / xem .env)
-- Grafana: http://localhost:3000 (admin / Grafana_DTC245200018_2026!)
-- Prometheus: http://localhost:9090 (chỉ 127.0.0.1)
-- Loki: http://localhost:3100 (chỉ 127.0.0.1)
+| Dịch vụ    | Địa chỉ                      | Ghi chú                        |
+|------------|------------------------------|--------------------------------|
+| Website    | https://localhost            | Chứng chỉ tự ký – Accept Risk  |
+| phpMyAdmin | https://localhost/phpmyadmin | Đăng nhập bằng user trong .env |
+| Grafana    | http://localhost:3000        | admin / mật khẩu trong .env    |
+| Prometheus | http://localhost:9090        | Chỉ lắng nghe 127.0.0.1        |
+| Loki       | http://localhost:3100        | Chỉ lắng nghe 127.0.0.1        |
 
 ## 5. Cấu trúc thư mục
 
-- docker-compose.yml
-- .env (không commit)
-- .gitignore
-- nginx/default.conf + nginx/ssl/
-- monitoring/ (prometheus, loki, promtail, grafana)
+```text
+Website_Quang_Ba_San_Pham/
+├── docker-compose.yml
+├── .env.example          # Mẫu biến môi trường (không chứa mật khẩu thật)
+├── .gitignore
+├── README.md
+├── nginx/
+│   ├── default.conf      # Reverse proxy + HTTPS + headers
+│   └── ssl/              # Chứng chỉ self-signed (lab)
+└── monitoring/
+    ├── prometheus.yml
+    ├── loki-config.yml
+    ├── promtail-config.yml
+    └── grafana/datasources/datasources.yml
+```
 
 ## 6. LogQL mẫu
 
+```text
 {container="wordpress"}
 {container=~"wordpress|nginx"}
 {container="wordpress"} |= "error"
 count_over_time({container="wordpress"}[5m])
+```
 
 ## 7. Hardening đã áp dụng
 
 - WordPress chạy non-root (user 33:33)
 - Network isolation: db_net (internal), web_net, monitor_net
-- Nginx: Security Headers + HSTS + chuyển hướng HTTP → HTTPS
-- Nginx: read_only filesystem + no-new-privileges
-- WordPress: no-new-privileges
-- Mật khẩu mạnh theo MSSV
+- Security headers + HSTS trên Nginx
+- HTTPS + redirect HTTP → HTTPS
+- no-new-privileges (WordPress, Nginx)
+- read-only filesystem (Nginx)
 - Grafana / Prometheus / Loki chỉ bind 127.0.0.1
-- User MySQL chỉ có quyền trên database WordPress (không có quyền global)
+- User MySQL chỉ có quyền trên database WordPress
+- Mật khẩu mạnh, file .env không commit
 
-## 8. Dashboard Grafana đã import
+## 8. Lịch sử commit
 
-- Node Exporter Full (ID: 1860)
-- Docker / cAdvisor monitoring (ID: 14282)
+| Commit   | Nội dung                                                      |
+|----------|---------------------------------------------------------------|
+| Commit 1 | WordPress + MySQL + phpMyAdmin + Nginx reverse proxy          |
+| Commit 2 | Prometheus + Grafana + node-exporter + cAdvisor                 |
+| Commit 3 | Loki + Promtail + Hardening cơ bản                            |
+| Commit 4+| HTTPS, HSTS, no-new-privileges, read-only, cập nhật README    |
 
-## 9. Lịch sử commit
+## 9. Lưu ý
 
-1. Commit 1: WordPress + MySQL + phpMyAdmin + Nginx reverse proxy
-2. Commit 2: Prometheus + Grafana + node-exporter + cAdvisor
-3. Commit 3: Loki + Promtail + Hardening cơ bản
-4. Commit 4: HTTPS + README + Hardening nâng cao
+- File `.env` chứa mật khẩu thật — không commit lên GitHub (đã có trong `.gitignore`)
+- Dùng `.env.example` làm mẫu, tự đặt mật khẩu mạnh trước khi chạy
+- Chứng chỉ SSL là self-signed, phù hợp môi trường lab localhost
