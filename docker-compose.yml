@@ -46,8 +46,6 @@ services:
     restart: unless-stopped
     environment:
       PMA_HOST: mysql-db
-      PMA_USER: root
-      PMA_PASSWORD: ${MYSQL_ROOT_PASSWORD}
       UPLOAD_LIMIT: 64M
     networks: [db_net, web_net]
     depends_on:
